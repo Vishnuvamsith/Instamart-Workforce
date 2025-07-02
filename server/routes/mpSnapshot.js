@@ -1,4 +1,5 @@
 const express = require('express');
+const { GetCommand, PutCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const router = express.Router();
 const DynamoDBManager = require('../utils/DynamoDBManager');
 const db = new DynamoDBManager();
@@ -24,18 +25,18 @@ router.post('/upload', async (req, res) => {
     };
 
     try {
-      const existing = await docClient.get({
+      const existing = await docClient.send(new GetCommand({
         TableName: TABLE_NAME,
         Key: key,
-      });
+      }));
 
       const existingItem = existing.Item;
 
       if (!existingItem) {
-        await docClient.put({
+        await docClient.send(new PutCommand({
           TableName: TABLE_NAME,
           Item: item,
-        });
+        }));
         inserted++;
         continue;
       }
@@ -59,17 +60,19 @@ router.post('/upload', async (req, res) => {
           ExpressionAttributeValues[`:v${i}`] = updateFields[k];
         });
 
-        await docClient.update({
+        await docClient.send(new UpdateCommand({
           TableName: TABLE_NAME,
           Key: key,
           UpdateExpression,
           ExpressionAttributeNames,
           ExpressionAttributeValues,
-        });
+        }));
+
         updated++;
       } else {
         unchanged++;
       }
+
     } catch (error) {
       console.error(`❌ Error processing ${item.wh_name} - ${item.date}:`, error);
     }

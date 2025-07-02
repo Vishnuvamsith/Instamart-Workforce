@@ -4,7 +4,7 @@ const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
 const { fromSSO } = require('@aws-sdk/credential-providers');
 
 class DynamoDBManager {
-  constructor(region = 'ap-south-1', profile = 'AWSSandboxAdmin-978983596161') {
+  constructor(region = 'ap-southeast-1', profile = 'AWSSandboxAdmin-978983596161') {
     this.region = region;
     this.profile = profile;
 
