@@ -8,7 +8,7 @@ const docClient = db.getClient();
 const TABLE_NAME = 'MPDailySnapshot';
 
 router.post('/upload', async (req, res) => {
-  const records = req.body;
+  const records = req.body.records;
 
   if (!Array.isArray(records)) {
     return res.status(400).json({ status: 'error', message: 'Invalid data format' });
