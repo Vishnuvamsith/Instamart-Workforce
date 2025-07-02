@@ -1,20 +1,54 @@
-// src/utils/DynamoDBManager.js
+// // src/utils/DynamoDBManager.js
+// const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+// const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
+// const { fromSSO } = require('@aws-sdk/credential-providers');
+
+// class DynamoDBManager {
+//   constructor(region = 'ap-southeast-1', profile = 'AWSSandboxAdmin-978983596161') {
+//     this.region = region;
+//     this.profile = profile;
+
+//     // Initialize DynamoDB client with SSO profile credentials
+//     this.client = new DynamoDBClient({
+//       region: this.region,
+//       credentials: fromSSO({ profile: this.profile }),
+//     });
+
+//     // Create a higher-level document client for easier usage
+//     this.docClient = DynamoDBDocumentClient.from(this.client);
+//   }
+
+//   getClient() {
+//     return this.docClient;
+//   }
+// }
+
+// module.exports = DynamoDBManager;
+
+
+// utils/DynamoDBManager.js
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
-const { fromSSO } = require('@aws-sdk/credential-providers');
+const { fromSSO, fromEnv } = require('@aws-sdk/credential-providers');
 
 class DynamoDBManager {
-  constructor(region = 'ap-southeast-1', profile = 'AWSSandboxAdmin-978983596161') {
+  constructor(region = 'ap-south-1', profile = 'AWSSandboxAdmin-978983596161') {
     this.region = region;
     this.profile = profile;
 
-    // Initialize DynamoDB client with SSO profile credentials
+    // Fallback logic: use fromSSO if available, else fromEnv
     this.client = new DynamoDBClient({
       region: this.region,
-      credentials: fromSSO({ profile: this.profile }),
+      credentials: async () => {
+        try {
+          return await fromSSO({ profile: this.profile })();
+        } catch (err) {
+          console.warn('⚠️ Falling back to fromEnv() due to SSO profile issue:', err.message);
+          return fromEnv()();
+        }
+      }
     });
 
-    // Create a higher-level document client for easier usage
     this.docClient = DynamoDBDocumentClient.from(this.client);
   }
 
