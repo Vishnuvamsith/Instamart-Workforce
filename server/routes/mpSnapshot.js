@@ -1,0 +1,81 @@
+const express = require('express');
+const router = express.Router();
+const DynamoDBManager = require('../utils/DynamoDBManager');
+const db = new DynamoDBManager();
+const docClient = db.getClient();
+
+const TABLE_NAME = 'MPDailySnapshot';
+
+router.post('/upload', async (req, res) => {
+  const records = req.body;
+
+  if (!Array.isArray(records)) {
+    return res.status(400).json({ status: 'error', message: 'Invalid data format' });
+  }
+
+  let inserted = 0;
+  let updated = 0;
+  let unchanged = 0;
+
+  for (const item of records) {
+    const key = {
+      wh_name: item.wh_name,
+      date: item.date,
+    };
+
+    try {
+      const existing = await docClient.get({
+        TableName: TABLE_NAME,
+        Key: key,
+      });
+
+      const existingItem = existing.Item;
+
+      if (!existingItem) {
+        await docClient.put({
+          TableName: TABLE_NAME,
+          Item: item,
+        });
+        inserted++;
+        continue;
+      }
+
+      const updateFields = {};
+      let hasChanges = false;
+
+      for (const field of Object.keys(item)) {
+        if ((field === 'wh_name' || field === 'date') || item[field] === existingItem[field]) continue;
+        updateFields[field] = item[field];
+        hasChanges = true;
+      }
+
+      if (hasChanges) {
+        const UpdateExpression = 'SET ' + Object.keys(updateFields).map((k, i) => `#f${i} = :v${i}`).join(', ');
+        const ExpressionAttributeNames = {};
+        const ExpressionAttributeValues = {};
+
+        Object.keys(updateFields).forEach((k, i) => {
+          ExpressionAttributeNames[`#f${i}`] = k;
+          ExpressionAttributeValues[`:v${i}`] = updateFields[k];
+        });
+
+        await docClient.update({
+          TableName: TABLE_NAME,
+          Key: key,
+          UpdateExpression,
+          ExpressionAttributeNames,
+          ExpressionAttributeValues,
+        });
+        updated++;
+      } else {
+        unchanged++;
+      }
+    } catch (error) {
+      console.error(`❌ Error processing ${item.wh_name} - ${item.date}:`, error);
+    }
+  }
+
+  res.json({ status: 'success', inserted, updated, unchanged, total: records.length });
+});
+
+module.exports = router;

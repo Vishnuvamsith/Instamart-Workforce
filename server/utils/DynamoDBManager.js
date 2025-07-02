@@ -1,0 +1,26 @@
+// src/utils/DynamoDBManager.js
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
+const { fromSSO } = require('@aws-sdk/credential-providers');
+
+class DynamoDBManager {
+  constructor(region = 'ap-south-1', profile = 'AWSSandboxAdmin-978983596161') {
+    this.region = region;
+    this.profile = profile;
+
+    // Initialize DynamoDB client with SSO profile credentials
+    this.client = new DynamoDBClient({
+      region: this.region,
+      credentials: fromSSO({ profile: this.profile }),
+    });
+
+    // Create a higher-level document client for easier usage
+    this.docClient = DynamoDBDocumentClient.from(this.client);
+  }
+
+  getClient() {
+    return this.docClient;
+  }
+}
+
+module.exports = DynamoDBManager;
