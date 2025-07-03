@@ -29,13 +29,14 @@
 // utils/DynamoDBManager.js
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
-const { fromSSO, fromEnv } = require('@aws-sdk/credential-providers');
-require('dotenv').config(); // ⬅️ Add this at the top
-
+const { fromSSO} = require('@aws-sdk/credential-providers');
+const { fromEnv } = require('@aws-sdk/credential-provider-env');
+require('dotenv').config();
 class DynamoDBManager {
-  constructor(region = 'ap-south-1', profile = 'AWSSandboxAdmin-978983596161') {
+  constructor(region = 'ap-southeast-1', profile = 'AWSSandboxAdmin-978983596161') {
     this.region = region;
     this.profile = profile;
+    console.log("profile!!")
 
     // Fallback logic: use fromSSO if available, else fromEnv
     this.client = new DynamoDBClient({
