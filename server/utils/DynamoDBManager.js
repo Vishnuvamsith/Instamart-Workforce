@@ -30,6 +30,7 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
 const { fromSSO, fromEnv } = require('@aws-sdk/credential-providers');
+require('dotenv').config(); // ⬅️ Add this at the top
 
 class DynamoDBManager {
   constructor(region = 'ap-south-1', profile = 'AWSSandboxAdmin-978983596161') {
